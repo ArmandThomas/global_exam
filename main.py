@@ -89,14 +89,9 @@ def go_to_next_module(local_driver):
     parent_xpath = "/html/body/div[1]/div/main/div[2]/div[2]/div[2]/div/div/div[3]"
     parent = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, parent_xpath)))
 
-    a_tag = parent.find_element(By.TAG_NAME, "a")
+    a_tag = parent.find_elements(By.TAG_NAME, "a")
 
-    href = a_tag.get_attribute("href")
-
-    content_id = href.split("/")[6]
-    industry_id = href.split("/")[4]
-
-    local_driver.get(url_base + "industry/" + industry_id + "/content/" + str(int(content_id) + number))
+    a_tag[number].click()
 
     time.sleep(5)
     play(local_driver)

@@ -6,8 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import random
 
-email = "a.thomas@ecole-ipssi.net"
-password = "es3$Hian_B@hHwM"
+email = ""
+password = ""
 
 url_base = "https://business.global-exam.com/"
 

@@ -5,9 +5,16 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import random
+from dotenv import dotenv_values
 
-email = ""
-password = ""
+env_vars = dotenv_values('.env.local')
+
+email = env_vars['EMAIL']
+password = env_vars['PASSWORD']
+
+if (not email or not password):
+    print("Please add your credentials in .env.local")
+    exit()
 
 url_base = "https://business.global-exam.com/"
 

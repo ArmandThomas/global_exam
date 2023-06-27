@@ -6,8 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import random
 
-email = ""
-password = ""
+email = "a.thomas@ecole-ipssi.net"
+password = "es3$Hian_B@hHwM"
 
 url_base = "https://business.global-exam.com/"
 
@@ -37,7 +37,11 @@ def get_stats(local_driver):
 def go_to_actual_module(local_driver):
     x_path = "/html/body/div[1]/div/main/div[2]/div/div/div[1]/div[1]/div[2]/div[3]/a"
     btn_actual_module = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, x_path)))
-    btn_actual_module.click()
+    try :
+        btn_actual_module.click()
+    except:
+        href = btn_actual_module.get_attribute('href')
+        local_driver.get(href)
 
 
 def play(local_driver):
@@ -353,17 +357,14 @@ if __name__ == '__main__':
         login(driver)
         try:
             got_to_orga(driver)
-            try:
-                nbr_hours = get_stats(driver)
-                while True:
-                    go_to_actual_module(driver)
-                    play(driver)
-            except Exception as e:
-                print(e)
-        except:
-            print("Unable to go to orga")
+        except :
+            pass
+        try:
+            nbr_hours = get_stats(driver)
+            while True:
+                go_to_actual_module(driver)
+                play(driver)
+        except Exception as e:
+            print(e)
     except:
         print("Unable to login")
-
-    while True:
-        pass

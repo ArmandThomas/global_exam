@@ -249,7 +249,9 @@ def start_answer(local_driver):
 
 
 def true_or_false_answer(local_driver):
-    print("true or false")
+    xpath = "/html/body/div[1]/div/div[2]/div[1]/div/div/div/div/div[2]/ul/li[2]"
+    true_or_false = local_driver.find_element(By.XPATH, xpath)
+    true_or_false.click()
     go_to_next_question(local_driver)
 
 

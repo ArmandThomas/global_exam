@@ -44,7 +44,7 @@ def get_stats(local_driver):
 def go_to_actual_module(local_driver):
     x_path = "/html/body/div[1]/div/main/div[2]/div/div/div[1]/div[1]/div[2]/div[3]/a"
     btn_actual_module = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, x_path)))
-    try :
+    try:
         btn_actual_module.click()
     except:
         href = btn_actual_module.get_attribute('href')
@@ -59,7 +59,7 @@ def play(local_driver):
         if get_terminate_module(local_driver) > 0:
             go_to_next_module(local_driver)
         else:
-            print("Module ended")
+            go_to_new_module(local_driver)
 
 
 def get_terminate_situation(local_driver):
@@ -68,6 +68,45 @@ def get_terminate_situation(local_driver):
     actual = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, actual_xpath)))
     max = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, max_xpath)))
     return int(max.text.replace("/ ", "")) - int(actual.text)
+
+
+def go_to_new_module(local_driver):
+    xpath = "/html/body/div[1]/div/main/div[2]/div[1]/div[2]/a"
+    btn_new_module = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, xpath)))
+    btn_new_module.click()
+
+    array_module = ["Immobilier", "Restauration", "Jeux vidéo", "Gestion d'un spa", "Design", "Santé", "Bâtiment",
+                    "Banque & Finance", "Météo et climat"]
+
+    if 'MODULE' in env_vars:
+        array_module = env_vars['MODULE'].split(",")
+
+    cards = WebDriverWait(local_driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "card-tab")))
+
+    for card in cards:
+        if "is-selected" in card.get_attribute("class"):
+            if card.text in array_module:
+                array_module.remove(card.text)
+
+    if len(array_module) == 0:
+        print("All modules have been done")
+        exit()
+
+    random_module = random.choice(array_module)
+    if 'MODULE' in env_vars:
+        random_module = random_module[0]
+
+    for card in cards:
+        if card.text == random_module:
+            card.click()
+            break
+
+    btn_start_xpath = "/html/body/div[1]/div/main/div[2]/div[2]/div[2]/span/div/div[2]/div[2]/a"
+    btn_start = WebDriverWait(local_driver, 10).until(EC.presence_of_element_located((By.XPATH, btn_start_xpath)))
+    btn_start.click()
+
+    time.sleep(2)
+    play(local_driver)
 
 
 def get_terminate_module(local_driver):
@@ -79,7 +118,6 @@ def get_terminate_module(local_driver):
 
 
 def go_to_next_module(local_driver):
-
     time.sleep(5)
 
     actual_xpath = '/html/body/div[1]/div/main/div[2]/div[2]/div[2]/div/div/div[2]/p[1]/span[1]'
@@ -95,9 +133,6 @@ def go_to_next_module(local_driver):
 
     time.sleep(5)
     play(local_driver)
-
-
-
 
 
 def go_to_situation(local_driver):
@@ -226,7 +261,7 @@ def answer_to_question(local_driver):
             go_to_next_question(local_driver)
         elif type_question == "End":
             is_end = go_to_next_question(local_driver)
-            try :
+            try:
                 xpath_end = "/html/body/div[1]/div[2]/div/div[2]/div/div/div[2]/div/a[2]"
                 end = local_driver.find_element(By.XPATH, xpath_end)
                 if end is not None:
@@ -234,8 +269,6 @@ def answer_to_question(local_driver):
                     continue_situation = False
             except:
                 pass
-
-
 
 
 def start_answer(local_driver):
@@ -345,7 +378,7 @@ def go_to_next_question(local_driver):
     css_selector = "button-solid-primary-large"
     list_btn = local_driver.find_elements(By.CLASS_NAME, css_selector)
     desired_text = ["Suivant", "Terminer"]
-    if len(list_btn) == 0 :
+    if len(list_btn) == 0:
         time.sleep(5)
         return "end"
     for btn in list_btn:
@@ -361,7 +394,7 @@ if __name__ == '__main__':
         login(driver)
         try:
             got_to_orga(driver)
-        except :
+        except:
             pass
         try:
             nbr_hours = get_stats(driver)

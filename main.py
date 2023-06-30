@@ -1,4 +1,5 @@
 import undetected_chromedriver as uc
+from selenium.webdriver import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -230,37 +231,38 @@ def get_type_question(local_driver):
 
 
 def answer_to_question(local_driver):
-    time.sleep(55)
+    time.sleep(2)
 
     continue_situation = True
+
+    context = []
 
     while continue_situation:
 
         time.sleep(5)
 
         type_question = get_type_question(local_driver)
-        print(type_question)
 
         if type_question == "Start":
             start_answer(local_driver)
         elif type_question == "True or False":
-            true_or_false_answer(local_driver)
+            true_or_false_answer(local_driver, context)
         elif type_question == "Multiple Choice":
-            multiple_choice_answer(local_driver)
+            multiple_choice_answer(local_driver, context)
         elif type_question == "Bad Answer":
             go_to_next_question(local_driver)
         elif type_question == "Blank Words":
-            blank_words_answer(local_driver)
+            blank_words_answer(local_driver, context)
         elif type_question == "Drag and Drop":
-            drag_and_drop_answer(local_driver)
+            drag_and_drop_answer(local_driver, context)
         elif type_question == "Match words":
-            match_words_answer(local_driver)
+            match_words_answer(local_driver, context)
         elif type_question == "Order words":
-            order_words_answer(local_driver)
+            order_words_answer(local_driver, context)
         elif type_question == "Transcript":
-            go_to_next_question(local_driver)
+            transcript_type(local_driver, context)
         elif type_question == "End":
-            is_end = go_to_next_question(local_driver)
+            go_to_next_question(local_driver)
             try:
                 xpath_end = "/html/body/div[1]/div[2]/div/div[2]/div/div/div[2]/div/a[2]"
                 end = local_driver.find_element(By.XPATH, xpath_end)
@@ -269,6 +271,11 @@ def answer_to_question(local_driver):
                     continue_situation = False
             except:
                 pass
+
+
+def transcript_type(local_driver, context) :
+
+    print("Transcript type")
 
 
 def start_answer(local_driver):
@@ -281,52 +288,73 @@ def start_answer(local_driver):
             break
 
 
-def true_or_false_answer(local_driver):
+def true_or_false_answer(local_driver, context):
     xpath = "/html/body/div[1]/div/div[2]/div[1]/div/div/div/div/div[2]/ul/li[2]"
     true_or_false = local_driver.find_element(By.XPATH, xpath)
     true_or_false.click()
     go_to_next_question(local_driver)
 
 
-def blank_words_answer(local_driver):
-    technical_words = [
-        "Compute", "Device", "Mouse", "Keyboard", "Monitor",
-        "Printer", "Router", "Modem", "Speaker", "Microphone",
-        "Webcam", "USB", "Hard drive", "Memory", "RAM",
-        "Processor", "Operating system", "Software", "Application", "File",
-        "Folder", "Browser", "Website", "Link", "Download",
-        "Upload", "Password", "Email", "Wireless", "Bluetooth",
-        "Wi-Fi", "Ethernet", "Firewall", "Virus", "Backup",
-        "Data", "Cloud", "Social media", "Chat", "Gaming",
-        "Interface", "Error", "Update", "Plug and play", "Driver",
-        "Resolution", "Pixel", "Scroll", "Search", "Click"
-    ]
+def blank_words_answer(local_driver, context):
 
-    input_elements = local_driver.find_elements(By.CSS_SELECTOR, "input[id^='recon']")
-    for input_element in input_elements:
-        input_element.send_keys(random.choice(technical_words))
-        time.sleep(0.5)
-
+    print("Blank words")
     go_to_next_question(local_driver)
 
 
-def drag_and_drop_answer(local_driver):
-    selector_drag_and_drop = "vue-draggable-answers-list"
-    drag_and_drop = local_driver.find_element(By.CLASS_NAME, selector_drag_and_drop)
+def drag_and_drop_answer(local_driver, context):
 
-    if drag_and_drop is not None:
-        span_elements = local_driver.execute_script("return arguments[0].getElementsByTagName('span')", drag_and_drop)
-        while len(span_elements) > 0:
-            number = random.randint(0, len(span_elements) - 1)
-            span_elements[number].click()
-            time.sleep(1)
-            span_elements = local_driver.execute_script("return arguments[0].getElementsByTagName('span')",
-                                                        drag_and_drop)
+    xpath_parent_list_answer = "/html/body/div[1]/div/div[2]/div[1]/div/div[2]"
+    parent_list_answer = WebDriverWait(local_driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, xpath_parent_list_answer))
+    )
 
-    go_to_next_question(local_driver)
+    list_words = []
+
+    if parent_list_answer is not None:
+        list_spans = local_driver.execute_script("return arguments[0].getElementsByTagName('span')", parent_list_answer)
+        for span in list_spans:
+            list_words.append(span.text)
+
+    xpath_text = "/html/body/div[1]/div/div[2]/div[1]/div/div[1]"
+    text = WebDriverWait(local_driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, xpath_text))
+    )
+    inner_html = text.get_attribute("innerHTML")
+
+    prompt = "Will be very usefull on answer me only the array not text with this," \
+             "Please interprete the html i give you and answer me my problem by responding only a array like ['word1', 'word2' etc...]" \
+             " For each word : %s give number of index sort by blank in the text, for example if the word %s should complete the first blank represented by div with data-row-name start with recon return me, the word %s should blank the second div, the return should be ['%s','%s', '%s'] : The html of text to complete is : %s " % (
+    ', '.join(list_words), list_words[0], list_words[2], list_words[0], list_words[2], list_words[1], inner_html)
+
+    try :
+        response = ask_question_to_gpt3(local_driver, prompt)
+
+        # response expect something like "Based on the HTML provided, here is the array of words that should fill in the blanks, sorted by the index of the corresponding blank:['to bring it into conformity', 'seasonal rentals', 'furniture']Explanation:Therefore, the array ['to bring it into conformity', 'seasonal rentals', 'furniture'] represents the words that should be used to fill in the respective blanks in the given HTML text, sorted by the index of the blanks." retrive the array of words by split by [
+        response = response.split("[")[1]
+        response = response.split("]")[0]
+        response = response.split(",")
+        response = [word.replace("'", "").strip() for word in response]
+
+        # response is like ['seasonal rentals', 'to bring it into conformity', 'furniture']
+        # get span elements and click them in the order of response
+        if len(response) == len(list_words):
+            for word in response:
+                xpath_span = "/html/body/div[1]/div/div[2]/div[1]/div/div[2]/span[text()='%s']" % word
+                span = local_driver.find_element(By.XPATH, xpath_span)
+                span.click()
+                time.sleep(1)
+
+    except:
+        pass
+
+    #go_to_next_question(local_driver)
 
 
-def match_words_answer(local_driver):
+
+
+
+
+def match_words_answer(local_driver, context):
     ul_parent_xpath = "/html/body/div[1]/div/div[2]/div[1]/div/div/div[2]/ul"
     ul_parent = local_driver.find_element(By.XPATH, ul_parent_xpath)
 
@@ -344,7 +372,7 @@ def match_words_answer(local_driver):
     go_to_next_question(local_driver)
 
 
-def order_words_answer(local_driver):
+def order_words_answer(local_driver, context):
     parent_xpath = "/html/body/div[1]/div/div[2]/div[1]/div/div/div[2]/div"
     parent = local_driver.find_element(By.XPATH, parent_xpath)
 
@@ -359,7 +387,7 @@ def order_words_answer(local_driver):
     go_to_next_question(local_driver)
 
 
-def multiple_choice_answer(local_driver):
+def multiple_choice_answer(local_driver, context):
     x_path_multiple_choice = "/html/body/div[1]/div/div[2]/div[1]/div/div/div/div/div[2]/ul"
     ul_multiple_choice = local_driver.find_element(By.XPATH, x_path_multiple_choice)
 
@@ -386,10 +414,91 @@ def go_to_next_question(local_driver):
             btn.click()
             break
 
+def ask_question_to_gpt3(local_driver, question):
+
+    get_answer_gpt = False
+
+    switch_to_new_tab(local_driver, 1)
+    time.sleep(2)
+    text_area_xpath = "/html/body/div[1]/div[1]/div[2]/div/main/div[3]/form/div/div/textarea"
+    text_area = WebDriverWait(local_driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, text_area_xpath)))
+    text_area.send_keys(question)
+
+    btn_send_xpath = "/html/body/div[1]/div[1]/div[2]/div/main/div[3]/form/div/div/button"
+    btn_send = WebDriverWait(local_driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, btn_send_xpath)))
+    btn_send.click()
+
+    time.sleep(10)
+
+    answer = None
+
+    while not get_answer_gpt :
+        x_path_status = "/html/body/div[1]/div[1]/div[2]/div/main/div[3]/form/div/div[1]/div/button"
+        btn_status = WebDriverWait(local_driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, x_path_status)))
+        if btn_status.text == "Regenerate response":
+
+            parent_all_answer = "/html/body/div[1]/div[1]/div[2]/div/main/div[2]/div/div/div"
+            all_answer = WebDriverWait(local_driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, parent_all_answer)))
+            if all_answer is not None:
+                selector = "text-base"
+                div_answer = local_driver.execute_script("return arguments[0].getElementsByClassName(arguments[1])",all_answer, selector)
+                if len(div_answer) > 0:
+                    # get all p tag in div
+
+                    # get me last div in div_answer
+                    div = div_answer[len(div_answer) - 1]
+
+                    p_elements = local_driver.execute_script("return arguments[0].getElementsByTagName('p')", div)
+
+                    text = ""
+                    for p in p_elements:
+                        text += p.text
+                    answer = text
+                    if answer is not None:
+                        get_answer_gpt = True
+                        break
+
+    switch_to_new_tab(local_driver, 0)
+    return answer
+
+def switch_to_new_tab(local_driver, tab):
+    time.sleep(2)
+    local_driver.switch_to.window(local_driver.window_handles[tab])
+    time.sleep(2)
+
 
 if __name__ == '__main__':
-    driver = uc.Chrome(use_subprocess=False)
+    chrome_options = uc.ChromeOptions()
+    chrome_options.add_argument("--disable-popup-blocking")
+    driver = uc.Chrome(options=chrome_options)
     driver.get(url_base)
+
+    # make new tab
+    driver.execute_script("window.open('https://chat.openai.com/', 'new_tab');")
+    time.sleep(2)
+
+    switch_to_new_tab(driver, 1)
+
+    # wait user to login to openai
+
+    is_connected_To_openai = False
+
+    while not is_connected_To_openai:
+        xpath_user_ai = "/html/body/div[1]/div[1]/div[1]/div/div/div/nav/div[4]/div/button"
+        time.sleep(2)
+        print("Waiting for user to login to openai")
+        try:
+            user_ai = driver.find_element(By.XPATH, xpath_user_ai)
+            is_connected_To_openai = True
+        except:
+            pass
+
+    switch_to_new_tab(driver, 0)
+
     try:
         login(driver)
         try:

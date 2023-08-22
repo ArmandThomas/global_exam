@@ -1,4 +1,4 @@
-import undetected_chromedriver as uc
+from undetected_chromedriver import Chrome, ChromeOptions
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -11,8 +11,9 @@ env_vars = dotenv_values('.env.local')
 
 email = env_vars['EMAIL']
 password = env_vars['PASSWORD']
+chrome_path = env_vars['CHROME_PATH']
 
-if (not email or not password):
+if (not email or not password or not chrome_path):
     print("Please add your credentials in .env.local")
     exit()
 
@@ -388,20 +389,24 @@ def go_to_next_question(local_driver):
 
 
 if __name__ == '__main__':
-    driver = uc.Chrome(use_subprocess=False)
-    driver.get(url_base)
-    try:
-        login(driver)
+    chrome_options = ChromeOptions()
+    chrome_options.binary_location = chrome_path
+    #chrome_options.add_argument('--headless')
+
+    with Chrome(options=chrome_options) as driver:
+        driver.get(url_base)
         try:
-            got_to_orga(driver)
+            login(driver)
+            try:
+                got_to_orga(driver)
+            except:
+                pass
+            try:
+                nbr_hours = get_stats(driver)
+                while True:
+                    go_to_actual_module(driver)
+                    play(driver)
+            except Exception as e:
+                print(e)
         except:
-            pass
-        try:
-            nbr_hours = get_stats(driver)
-            while True:
-                go_to_actual_module(driver)
-                play(driver)
-        except Exception as e:
-            print(e)
-    except:
-        print("Unable to login")
+            print("Unable to login")
